@@ -61,6 +61,7 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/mongoose": "^5.11.97",
     "@types/nodemailer": "^7.0.2",
+    "@vercel/speed-insights": "^1.2.0",
     "apexcharts": "^4.3.0",
     "bcryptjs": "^3.0.2",
     "critters": "^0.0.25",

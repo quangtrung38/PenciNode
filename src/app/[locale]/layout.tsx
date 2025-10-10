@@ -6,6 +6,7 @@ import { PostHogProvider } from '@/components/analytics/PostHogProvider';
 import AuthProvider from '@/components/AuthProvider';
 import AuthRedirect from '@/components/AuthRedirect';
 import { routing } from '@/libs/I18nRouting';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/styles/global.css';
 
 export const metadata: Metadata = {
@@ -57,6 +58,7 @@ export default async function RootLayout(props: {
           <NextIntlClientProvider>
             <PostHogProvider>
               {props.children}
+              <SpeedInsights />
             </PostHogProvider>
           </NextIntlClientProvider>
         </AuthProvider>
