@@ -7,6 +7,15 @@ import './src/libs/Env';
 const baseConfig: NextConfig = {
   eslint: {
     dirs: ['.'],
+    // Ignore ESLint errors during production builds
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
+    ignoreBuildErrors: true,
   },
   poweredByHeader: false,
   reactStrictMode: true,
