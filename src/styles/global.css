@@ -1,0 +1,5 @@
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss';
+
+/* Admin dashboard styles - loaded only for admin routes */
