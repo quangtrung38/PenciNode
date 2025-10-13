@@ -46,6 +46,11 @@ const navItems: NavItem[] = [
     name: 'Mẫu thông báo',
     path: '/admin/notification-templates',
   },
+  {
+    icon: <BoxCubeIcon />,
+    name: 'Mockups',
+    path: '/admin/mockups',
+  },
 ];
 
 // Remove othersItems array as we only need main menu items

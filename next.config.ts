@@ -68,6 +68,9 @@ const baseConfig: NextConfig = {
       },
     ],
   },
+  // Ensure static file serving works in production
+  assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
+  trailingSlash: false,
   webpack: (config, { dev, isServer }) => {
     // SVG loader
     config.module.rules.push({

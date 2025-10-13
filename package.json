@@ -66,6 +66,7 @@
     "bcryptjs": "^3.0.2",
     "critters": "^0.0.25",
     "flatpickr": "^4.6.13",
+    "mathjs": "^15.0.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
     "next": "^15.5.4",
@@ -85,6 +86,7 @@
     "superjson": "^2.2.2",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0",
+    "uuid": "^13.0.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {
@@ -110,6 +112,7 @@
     "@types/node": "^24.5.2",
     "@types/pg": "^8.15.5",
     "@types/react": "^19.1.13",
+    "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^5.0.3",
     "@vitest/browser": "^3.2.4",
     "@vitest/coverage-v8": "^3.2.4",
