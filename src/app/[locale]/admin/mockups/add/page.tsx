@@ -104,7 +104,7 @@ export default function AddMockupPage() {
     try {
       setIsLoading(true);
 
-      // Upload file to server
+      // Upload file to Cloudinary
       const formData = new FormData();
       formData.append('file', file);
 
@@ -116,12 +116,12 @@ export default function AddMockupPage() {
       const uploadResult = await uploadResponse.json();
 
       if (!uploadResponse.ok) {
-        throw new Error(uploadResult.error || 'Failed to upload image');
+        throw new Error(uploadResult.error || 'Failed to upload image to Cloudinary');
       }
 
-      // Set image preview to the uploaded file URL
-      const fileUrl = uploadResult.fileUrl;
-      setImagePreview(fileUrl);
+      // Set image preview to the uploaded Cloudinary URL
+      const imageUrl = uploadResult.fileUrl;
+      setImagePreview(imageUrl);
       
       // Load image to get dimensions
       const img = new Image();
@@ -140,7 +140,7 @@ export default function AddMockupPage() {
         setControlPoints(newPoints);
         setOriginalPositions(newPoints);
       };
-      img.src = fileUrl;
+      img.src = imageUrl;
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload image');

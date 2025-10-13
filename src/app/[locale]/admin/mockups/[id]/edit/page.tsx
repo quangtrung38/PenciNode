@@ -216,7 +216,7 @@ export default function EditMockupPage({ params }: { params: Promise<{ id: strin
     try {
       setIsLoading(true);
 
-      // Upload file to server
+      // Upload file to Cloudinary
       const formData = new FormData();
       formData.append('file', file);
 
@@ -228,12 +228,12 @@ export default function EditMockupPage({ params }: { params: Promise<{ id: strin
       const uploadResult = await uploadResponse.json();
 
       if (!uploadResponse.ok) {
-        throw new Error(uploadResult.error || 'Failed to upload image');
+        throw new Error(uploadResult.error || 'Failed to upload image to Cloudinary');
       }
 
-      // Set image preview to the uploaded file URL
-      const fileUrl = uploadResult.fileUrl;
-      setImagePreview(fileUrl);
+      // Set image preview to the uploaded Cloudinary URL
+      const imageUrl = uploadResult.fileUrl;
+      setImagePreview(imageUrl);
       
       // Load image to get dimensions
       const img = new Image();
@@ -252,7 +252,7 @@ export default function EditMockupPage({ params }: { params: Promise<{ id: strin
         setControlPoints(newPoints);
         setOriginalPositions(newPoints);
       };
-      img.src = fileUrl;
+      img.src = imageUrl;
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload image');
@@ -671,10 +671,13 @@ export default function EditMockupPage({ params }: { params: Promise<{ id: strin
                     {/* Background Image */}
                     <img
                       ref={imagePreviewRef}
+                      key={imagePreview || mockup?.image}
                       src={imagePreview || mockup?.image || ''}
                       alt="Canvas Background"
                       className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                       draggable={false}
+                      onLoad={() => console.log('Image loaded:', imagePreview || mockup?.image)}
+                      onError={() => console.error('Image failed to load:', imagePreview || mockup?.image)}
                     />                {/* Render all mockup boxes */}
                 {boxes.map((box, boxIndex) => {
                   const isActive = activeBoxIndex === boxIndex;

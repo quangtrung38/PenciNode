@@ -27,12 +27,13 @@ function formatDate(date: Date | null | string): string | null {
 // GET - Get single mockup by id
 async function handleGetMockup(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
 
-    const mockupId = params.id;
+    const resolvedParams = await params;
+    const mockupId = resolvedParams.id;
 
     if (!mockupId) {
       return NextResponse.json(
@@ -91,12 +92,13 @@ async function handleGetMockup(
 // PUT - Update mockup
 async function handleUpdateMockup(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
 
-    const mockupId = params.id;
+    const resolvedParams = await params;
+    const mockupId = resolvedParams.id;
     const body = await request.json();
 
     if (!mockupId) {
@@ -208,12 +210,13 @@ async function handleUpdateMockup(
 // DELETE - Delete mockup
 async function handleDeleteMockup(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
 
-    const mockupId = params.id;
+    const resolvedParams = await params;
+    const mockupId = resolvedParams.id;
 
     if (!mockupId) {
       return NextResponse.json(

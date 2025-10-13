@@ -64,6 +64,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "apexcharts": "^4.3.0",
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
     "critters": "^0.0.25",
     "flatpickr": "^4.6.13",
     "mathjs": "^15.0.0",
