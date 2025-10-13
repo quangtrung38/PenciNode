@@ -3,7 +3,7 @@
  * Port from jQuery/numeric.js to TypeScript/mathjs
  */
 
-import { lusolve, matrix, multiply, subtract } from 'mathjs';
+import { lusolve, matrix, multiply } from 'mathjs';
 
 export interface Point {
   x: number;
@@ -28,29 +28,44 @@ export function getTransform(from: Point[], to: Point[]): number[][] {
     throw new Error('Both from and to arrays must contain exactly 4 points');
   }
 
+  // Validate that all points are defined
+  for (let i = 0; i < 4; i++) {
+    if (!from[i] || !to[i]) {
+      throw new Error(`Missing point at index ${i}`);
+    }
+    if (typeof from[i]!.x !== 'number' || typeof from[i]!.y !== 'number' || 
+        typeof to[i]!.x !== 'number' || typeof to[i]!.y !== 'number') {
+      throw new Error(`Invalid point coordinates at index ${i}`);
+    }
+  }
+
   // Build the coefficient matrix A for the linear system
   // Each point correspondence gives us 2 equations (x and y)
   const A: number[][] = [];
   
   for (let i = 0; i < 4; i++) {
+    const fromPoint = from[i]!;
+    const toPoint = to[i]!;
+    
     // Equation for x coordinate
     A.push([
-      from[i].x, from[i].y, 1, 0, 0, 0,
-      -from[i].x * to[i].x, -from[i].y * to[i].x,
+      fromPoint.x, fromPoint.y, 1, 0, 0, 0,
+      -fromPoint.x * toPoint.x, -fromPoint.y * toPoint.x,
     ]);
     
     // Equation for y coordinate
     A.push([
-      0, 0, 0, from[i].x, from[i].y, 1,
-      -from[i].x * to[i].y, -from[i].y * to[i].y,
+      0, 0, 0, fromPoint.x, fromPoint.y, 1,
+      -fromPoint.x * toPoint.y, -fromPoint.y * toPoint.y,
     ]);
   }
 
   // Build the result vector b
   const b: number[] = [];
   for (let i = 0; i < 4; i++) {
-    b.push(to[i].x);
-    b.push(to[i].y);
+    const toPoint = to[i]!;
+    b.push(toPoint.x);
+    b.push(toPoint.y);
   }
 
   // Solve the linear system Ah = b using LU decomposition
@@ -72,11 +87,11 @@ export function getTransform(from: Point[], to: Point[]): number[][] {
   // Construct the 4x4 homography matrix H from the solution
   // h contains [h00, h01, h02, h10, h11, h12, h20, h21]
   // We need to add h22 = 1 to complete the matrix
-  const H = [
-    [h[0], h[1], 0, h[2]], // First row
-    [h[3], h[4], 0, h[5]], // Second row
-    [0, 0, 1, 0],          // Third row (z-axis, identity for 2D)
-    [h[6], h[7], 0, 1],    // Fourth row (perspective)
+  const H: number[][] = [
+    [h[0] ?? 0, h[1] ?? 0, 0, h[2] ?? 0], // First row
+    [h[3] ?? 0, h[4] ?? 0, 0, h[5] ?? 0], // Second row
+    [0, 0, 1, 0],                         // Third row (z-axis, identity for 2D)
+    [h[6] ?? 0, h[7] ?? 0, 0, 1],         // Fourth row (perspective)
   ];
 
   // Verify the transformation (optional, for debugging)
@@ -93,22 +108,27 @@ export function getTransform(from: Point[], to: Point[]): number[][] {
  */
 function verifyTransform(H: number[][], from: Point[], to: Point[]): void {
   for (let i = 0; i < 4; i++) {
+    const fromPoint = from[i];
+    const toPoint = to[i];
+    
+    if (!fromPoint || !toPoint) continue;
+    
     // Apply homogeneous transformation
-    const transformed = multiply(H, [from[i].x, from[i].y, 0, 1]) as number[];
+    const transformed = multiply(H, [fromPoint.x, fromPoint.y, 0, 1]) as number[];
     
     // Normalize by dividing by w (homogeneous coordinate)
-    const w = transformed[3];
-    const x = transformed[0] / w;
-    const y = transformed[1] / w;
+    const w = transformed[3] ?? 1;
+    const x = (transformed[0] ?? 0) / w;
+    const y = (transformed[1] ?? 0) / w;
     
     // Check if transformed point matches target
     const error = Math.sqrt(
-      Math.pow(x - to[i].x, 2) + Math.pow(y - to[i].y, 2),
+      Math.pow(x - toPoint.x, 2) + Math.pow(y - toPoint.y, 2),
     );
     
     if (error > 1e-6) {
       console.warn(`Transform verification failed for point ${i}:`, {
-        expected: to[i],
+        expected: toPoint,
         actual: { x, y },
         error,
       });
@@ -126,7 +146,8 @@ export function matrixToCSS(matrix: number[][]): string {
   // Convert from row-major to column-major
   for (let col = 0; col < 4; col++) {
     for (let row = 0; row < 4; row++) {
-      values.push(matrix[row][col]);
+      const value = matrix[row]?.[col] ?? 0;
+      values.push(value);
     }
   }
   
