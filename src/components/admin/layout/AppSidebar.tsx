@@ -51,6 +51,16 @@ const navItems: NavItem[] = [
     name: 'Mockups',
     path: '/admin/mockups',
   },
+  {
+    icon: <GridIcon />,
+    name: 'Quản lý hình ảnh',
+    path: '/admin/editor-images',
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: 'Danh mục',
+    path: '/admin/categories',
+  },
 ];
 
 // Remove othersItems array as we only need main menu items
