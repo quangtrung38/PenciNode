@@ -12,6 +12,8 @@ export { Plan } from './Plan';
 export type { IPlan } from './Plan';
 export { Product } from './Product';
 export type { IProduct } from './Product';
+export { CategoryProduct } from './CategoryProduct';
+export type { ICategoryProduct } from './CategoryProduct';
 export { User } from './User';
 export type { IUser } from './User';
 export { default as UserPlan } from './UserPlan';

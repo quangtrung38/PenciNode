@@ -5,6 +5,7 @@ export interface IProduct extends Document {
   name: string | null;
   slug: string | null;
   cate_name: string | null;
+  category_id: mongoose.Types.ObjectId | null;
   tgia_cate: number;
   tgia_product: number;
   width: number | null;
@@ -31,6 +32,8 @@ export interface IProduct extends Document {
   display: number;
   display_home: number;
   isShowPage: number;
+  homePenci: number;
+  isSocical: number;
   enableBg: number;
   enableBgmk: number;
   outline: number;
@@ -56,6 +59,11 @@ const ProductSchema = new Schema<IProduct>(
     },
     cate_name: {
       type: String,
+      default: null,
+    },
+    category_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'CategoryProduct',
       default: null,
     },
     tgia_cate: {
@@ -160,6 +168,14 @@ const ProductSchema = new Schema<IProduct>(
       default: 0,
     },
     isShowPage: {
+      type: Number,
+      default: 0,
+    },
+    homePenci: {
+      type: Number,
+      default: 0,
+    },
+    isSocical: {
       type: Number,
       default: 0,
     },

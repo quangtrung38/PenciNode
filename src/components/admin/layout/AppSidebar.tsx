@@ -58,8 +58,8 @@ const navItems: NavItem[] = [
   },
   {
     icon: <BoxCubeIcon />,
-    name: 'Danh mục',
-    path: '/admin/categories',
+    name: 'Sản phẩm',
+    path: '/admin/products',
   },
 ];
 

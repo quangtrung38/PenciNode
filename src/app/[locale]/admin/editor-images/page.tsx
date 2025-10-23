@@ -44,11 +44,22 @@ interface EditorImage {
   updatedAt: string;
 }
 
+// Category interface
+interface Category {
+  id: string;
+  name: string;
+  display: number;
+  position: number;
+  img: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function EditorImagesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [filterDisplay, setFilterDisplay] = useState('all');
-  const [filterBackground, setFilterBackground] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -57,6 +68,8 @@ export default function EditorImagesPage() {
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<EditorImage | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const dropdownRefs = useRef<{ [key: string]: HTMLButtonElement }>({});
 
   // REST API state
@@ -69,6 +82,7 @@ export default function EditorImagesPage() {
   const [totalCategories, setTotalCategories] = useState(0);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [hasFetchedAfterInitial, setHasFetchedAfterInitial] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const handleFilterChange = (setter: (v: any) => void) => (e: any) => {
     setter(e.target.value);
@@ -100,6 +114,23 @@ export default function EditorImagesPage() {
     }
   }, []);
 
+  // Fetch categories for filter dropdown
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/categories?limit=1000&display=all');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      } else {
+        console.error('Failed to fetch categories');
+        setCategories([]);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
+    }
+  }, []);
+
   // Fetch images from REST API
   const fetchImages = async (isInitialLoad = false) => {
     try {
@@ -113,10 +144,14 @@ export default function EditorImagesPage() {
       const params = new URLSearchParams({
         search: searchTerm,
         display: filterDisplay,
-        is_background: filterBackground,
         page: page.toString(),
         limit: limit.toString(),
       });
+
+      // Only add category_id if it's not 'all'
+      if (filterCategory !== 'all') {
+        params.append('category_id', filterCategory);
+      }
 
       const response = await fetch(`/api/admin/editor-images?${params}`);
 
@@ -145,6 +180,7 @@ export default function EditorImagesPage() {
     const loadInitialData = async () => {
       await fetchImages(true);
       await fetchCategoriesCount();
+      await fetchCategories();
       setIsInitialLoadComplete(true);
     };
     loadInitialData();
@@ -167,26 +203,25 @@ export default function EditorImagesPage() {
     if (isInitialLoadComplete && hasFetchedAfterInitial) {
       fetchImages(false);
     }
-  }, [searchTerm, filterDisplay, filterBackground, page, isInitialLoadComplete, hasFetchedAfterInitial]);
+  }, [searchTerm, filterDisplay, filterCategory, page, isInitialLoadComplete, hasFetchedAfterInitial]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       
-      // Check if click is on the dropdown menu or any of its contents
-      if (openDropdown && !target.closest('.dropdown-menu') && !target.closest('button[title="Menu"]')) {
-        setOpenDropdown(null);
+      if (isCategoryDropdownOpen && !target.closest('.category-dropdown')) {
+        setIsCategoryDropdownOpen(false);
       }
     };
 
-    if (openDropdown) {
+    if (isCategoryDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
     
     return undefined;
-  }, [openDropdown]);
+  }, [isCategoryDropdownOpen]);
 
   // Keyboard support for image preview
   useEffect(() => {
@@ -268,8 +303,38 @@ export default function EditorImagesPage() {
   };
 
   const handleCategoryModalSuccess = () => {
-    // Refresh categories count
+    // Refresh categories count and list
     fetchCategoriesCount();
+    fetchCategories();
+  };
+
+  // Delete category
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      const response = await fetch(`/api/admin/categories/${categoryId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete category');
+      }
+
+      // Refresh categories
+      fetchCategories();
+      fetchCategoriesCount();
+
+      // If the deleted category was selected in filter, reset to 'all'
+      if (filterCategory === categoryId) {
+        setFilterCategory('all');
+        setPage(1);
+        setHasFetchedAfterInitial(true);
+      }
+
+      alert('Xóa danh mục thành công');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      alert('Có lỗi xảy ra khi xóa danh mục');
+    }
   };
 
   // Toggle display status
@@ -495,16 +560,87 @@ export default function EditorImagesPage() {
             </select>
           </div>
 
-          <div className="md:w-48">
-            <select
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-              value={filterBackground}
-              onChange={handleFilterChange(setFilterBackground)}
+          <div className="md:w-80 relative">
+            <button
+              type="button"
+              onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white flex items-center justify-between category-dropdown"
             >
-              <option value="all">Tất cả background</option>
-              <option value="1">Background</option>
-              <option value="0">Không phải background</option>
-            </select>
+              <span className="truncate">
+                {filterCategory === 'all'
+                  ? 'Tất cả danh mục'
+                  : categories.find(cat => cat.id === filterCategory)?.name || 'Tất cả danh mục'
+                }
+              </span>
+              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {isCategoryDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto category-dropdown">
+                <div
+                  className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                  onClick={() => {
+                    setFilterCategory('all');
+                    setIsCategoryDropdownOpen(false);
+                    setPage(1);
+                    setHasFetchedAfterInitial(true);
+                  }}
+                >
+                  Tất cả danh mục
+                </div>
+                {categories.map((category) => (
+                  <div
+                    key={category.id}
+                    className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <div
+                      className="flex-1 cursor-pointer"
+                      onClick={() => {
+                        setFilterCategory(category.id);
+                        setIsCategoryDropdownOpen(false);
+                        setPage(1);
+                        setHasFetchedAfterInitial(true);
+                      }}
+                    >
+                      {category.name}
+                    </div>
+                    <div className="flex items-center gap-1 ml-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCategory(category);
+                          setIsCategoryModalOpen(true);
+                          setIsCategoryDropdownOpen(false);
+                        }}
+                        className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                        title="Chỉnh sửa danh mục"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Bạn có chắc chắn muốn xóa danh mục "${category.name}"? Hành động này không thể hoàn tác.`)) {
+                            handleDeleteCategory(category.id);
+                          }
+                        }}
+                        className="p-1 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        title="Xóa danh mục"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -739,7 +875,7 @@ export default function EditorImagesPage() {
         isOpen={isCategoryModalOpen}
         onClose={handleCategoryModalClose}
         onSuccess={handleCategoryModalSuccess}
-        editingCategory={null}
+        editingCategory={editingCategory}
       />
 
       {/* Image Preview Modal */}

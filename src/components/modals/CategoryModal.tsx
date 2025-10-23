@@ -399,14 +399,15 @@ export default function CategoryModal({ isOpen, onClose, onSuccess, editingCateg
 
                 {!imagePreview ? (
                   <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
                       isDragOver
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-300 dark:border-gray-600'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-25 dark:hover:bg-blue-900/10'
                     }`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
                   >
                     <div className="space-y-4">
                       <div className="mx-auto w-12 h-12 text-gray-400">
@@ -416,14 +417,7 @@ export default function CategoryModal({ isOpen, onClose, onSuccess, editingCateg
                       </div>
                       <div>
                         <p className="text-gray-600 dark:text-gray-400">
-                          Kéo thả hình ảnh vào đây hoặc{' '}
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="text-blue-600 hover:text-blue-500 font-medium"
-                          >
-                            chọn file
-                          </button>
+                          Kéo thả hình ảnh vào đây hoặc click để chọn file
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           JPG, PNG, GIF, WebP (tối đa 10MB)

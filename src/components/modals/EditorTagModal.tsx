@@ -1,139 +1,111 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog } from '@headlessui/react';
 
-interface Category {
+interface EditorTag {
   id: string;
   name: string;
+  slug: string;
   display: number;
-}
-
-interface EditorImage {
-  id: string;
-  name?: string;
-  parent_id?: number;
-  category_id?: string;
-  img: string;
-  img_thumb: string;
-  display: number;
+  display_cate: number;
+  position: number;
+  is_cate: boolean;
+  img: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-interface EditorImageModalProps {
+interface EditorTagModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (action: 'create' | 'update', imageData?: EditorImage) => void;
-  editingImage?: EditorImage | null;
+  onSuccess: (action: 'create' | 'update', data: any) => void;
+  editingTag: EditorTag | null;
 }
 
-export default function EditorImageModal({ isOpen, onClose, onSuccess, editingImage }: EditorImageModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+export default function EditorTagModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  editingTag,
+}: EditorTagModalProps) {
   const [formData, setFormData] = useState({
     name: '',
-    category_id: '',
-    display: 1,
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Reset form when modal opens/closes or editing image changes
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset form when modal opens/closes or editing item changes
   useEffect(() => {
     if (isOpen) {
-      if (editingImage) {
-        // Edit mode - populate with existing data
+      if (editingTag) {
         setFormData({
-          name: editingImage.name || '',
-          category_id: editingImage.category_id || '',
-          display: editingImage.display,
+          name: editingTag.name,
         });
-        setImagePreview(editingImage.img);
-        setThumbnailPreview(editingImage.img_thumb);
-        setSelectedFile(null);
+        setImagePreview(editingTag.img);
       } else {
-        // Add mode - reset form
         setFormData({
           name: '',
-          category_id: '',
-          display: 1,
         });
-        setImagePreview('');
-        setThumbnailPreview('');
-        setSelectedFile(null);
+        setImagePreview(null);
       }
+      setSelectedFile(null);
       setError(null);
     }
-  }, [isOpen, editingImage]);
+  }, [isOpen, editingTag]);
 
-  // Fetch categories once when component mounts
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setCategoriesLoading(true);
-      try {
-        // Load all categories (including hidden ones) for editing
-        const response = await fetch('/api/admin/categories?limit=1000&display=all');
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data.categories || []);
-        } else {
-          console.error('Failed to fetch categories');
-          setCategories([]);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        setCategories([]);
-      } finally {
-        setCategoriesLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []); // Only run once on mount
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: name === 'display'
-        ? (value === '' ? 1 : Number(value))
-        : value,
+      [name]: value,
     }));
   };
 
-  const handleSwitchChange = (name: string, value: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value ? 1 : 0,
-    }));
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
   };
 
-  const validateFile = (file: File): string | null => {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && files[0]) {
+      handleFile(files[0]);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0 && files[0]) {
+      handleFile(files[0]);
+    }
+  };
+
+  const handleFile = (file: File) => {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      return 'Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)';
+      setError('Chỉ chấp nhận file ảnh (JPEG, PNG, WebP, GIF)');
+      return;
     }
 
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      return 'Kích thước file không được vượt quá 10MB';
-    }
-
-    return null;
-  };
-
-  const handleFileSelect = useCallback((file: File) => {
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
+      setError('Kích thước file không được vượt quá 5MB');
       return;
     }
 
@@ -144,44 +116,13 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string);
-      // For now, use same image as thumbnail preview
-      // In real implementation, you might want to generate a smaller thumbnail
-      setThumbnailPreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
-  }, []);
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
   };
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0 && files[0]) {
-      handleFileSelect(files[0]);
-    }
-  }, [handleFileSelect]);
-
   const handleRemoveImage = () => {
+    setImagePreview(null);
     setSelectedFile(null);
-    setImagePreview('');
-    setThumbnailPreview('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -191,7 +132,7 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
     const formDataUpload = new FormData();
     formDataUpload.append('file', file);
 
-    const uploadResponse = await fetch('/api/admin/editor-images/upload', {
+    const uploadResponse = await fetch('/api/admin/editor-tags/upload', {
       method: 'POST',
       body: formDataUpload,
     });
@@ -234,7 +175,7 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
 
       console.log('Extracted publicId:', publicId);
 
-      await fetch('/api/admin/editor-images/delete-image', {
+      await fetch('/api/admin/editor-tags/delete-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -255,59 +196,42 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
     try {
       // Validate required fields
       if (!formData.name?.trim()) {
-        throw new Error('Tên ảnh là bắt buộc');
-      }
-
-      if (!formData.category_id) {
-        throw new Error('Vui lòng chọn danh mục');
+        throw new Error('Tên danh mục là bắt buộc');
       }
 
       let finalImageUrl = imagePreview;
-      let finalThumbnailUrl = thumbnailPreview;
 
       // Upload new image if selected
       if (selectedFile) {
         // If editing and changing image, delete old images first
-        if (editingImage) {
-          await deleteOldImage(editingImage.img);
-          if (editingImage.img_thumb !== editingImage.img) {
-            await deleteOldImage(editingImage.img_thumb);
-          }
+        if (editingTag && editingTag.img) {
+          await deleteOldImage(editingTag.img);
         }
 
         const uploadResult = await uploadImageToCloudinary(selectedFile);
         finalImageUrl = uploadResult.fileUrl;
-        finalThumbnailUrl = uploadResult.thumbnailUrl;
-      } else if (editingImage) {
-        // Keep existing images if no new file selected in edit mode
-        finalImageUrl = editingImage.img;
-        finalThumbnailUrl = editingImage.img_thumb;
-      } else {
-        throw new Error('Vui lòng chọn hình ảnh');
+      } else if (editingTag) {
+        // Keep existing image if no new file selected in edit mode
+        finalImageUrl = editingTag.img;
       }
 
       // Prepare data for submission
-      const submitData = {
-        name: formData.name || null,
-        category_id: formData.category_id || null,
-        img: finalImageUrl,
-        img_thumb: finalThumbnailUrl,
-        img_process: null,
-        display: formData.display,
-        group_img: null,
-        group_imgThumb: null,
-        group_name: null,
-        is_background: 0, // Default to 0 since we removed the switch
-        description: null, // Default to null since we removed description
-        user_id: null, // Default to null since we removed user_id
-        parent_id: 0, // Default to 0 since we removed parent_id
-      };
+      const submitData = editingTag
+        ? {
+            name: formData.name.trim(),
+            img: finalImageUrl,
+          }
+        : {
+            name: formData.name.trim(),
+            img: finalImageUrl,
+            display: 1,
+          };
 
-      const url = editingImage
-        ? `/api/admin/editor-images/${editingImage.id}`
-        : '/api/admin/editor-images';
+      const url = editingTag
+        ? `/api/admin/editor-tags/${editingTag.id}`
+        : '/api/admin/editor-tags';
 
-      const method = editingImage ? 'PUT' : 'POST';
+      const method = editingTag ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
@@ -320,13 +244,13 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || `Failed to ${editingImage ? 'update' : 'create'} editor image`);
+        throw new Error(result.error || `Failed to ${editingTag ? 'update' : 'create'} editor tag`);
       }
 
-      // Call success callback with action and image data
-      const action = editingImage ? 'update' : 'create';
-      const imageData = result.image || result.data;
-      onSuccess(action, imageData);
+      // Call success callback with action and tag data
+      const action = editingTag ? 'update' : 'create';
+      const tagData = result.editorTag || result.data;
+      onSuccess(action, tagData);
 
       onClose();
     } catch (err) {
@@ -355,7 +279,7 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-white">
-              {editingImage ? 'Chỉnh sửa hình ảnh' : 'Thêm hình ảnh mới'}
+              {editingTag ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
             </Dialog.Title>
             <button
               onClick={handleClose}
@@ -392,7 +316,7 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tên ảnh
+                  Tên danh mục <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -400,65 +324,8 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
                   value={formData.name}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Nhập tên hình ảnh"
+                  placeholder="Nhập tên danh mục"
                 />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Danh mục <span className="text-red-500">*</span>
-                </label>
-                {categoriesLoading ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-                    <div className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span className="text-gray-500 dark:text-gray-400">Đang tải danh mục...</span>
-                    </div>
-                  </div>
-                ) : (
-                  <select
-                    name="category_id"
-                    value={formData.category_id}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
-                    <option value="">Chọn danh mục</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {/* Display Switch */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Hiển thị
-                </label>
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchChange('display', formData.display === 0)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      formData.display === 1 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        formData.display === 1 ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                  <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                    {formData.display === 1 ? 'Có' : 'Không'}
-                  </span>
-                </div>
               </div>
 
               {/* Current Image Preview */}
@@ -490,7 +357,7 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
               {/* Image Upload Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {imagePreview ? 'Thay đổi ảnh' : 'Hình ảnh'} <span className="text-red-500">*</span>
+                  {imagePreview ? 'Thay đổi ảnh' : 'Hình ảnh'}
                 </label>
 
                 {!imagePreview ? (
@@ -498,7 +365,7 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
                       isDragOver
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-25 dark:hover:bg-blue-900/10'
+                        : 'border-gray-300 dark:border-gray-600'
                     }`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -516,7 +383,7 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
                           Kéo thả hình ảnh vào đây hoặc click để chọn file
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          JPG, PNG, GIF, WebP (tối đa 10MB)
+                          JPG, PNG, GIF, WebP (tối đa 5MB)
                         </p>
                       </div>
                     </div>
@@ -553,7 +420,7 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
                             Kéo thả hình ảnh mới vào đây hoặc click để chọn file
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            JPG, PNG, GIF, WebP (tối đa 10MB)
+                            JPG, PNG, GIF, WebP (tối đa 5MB)
                           </p>
                         </div>
                       </div>
@@ -593,10 +460,10 @@ export default function EditorImageModal({ isOpen, onClose, onSuccess, editingIm
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  {editingImage ? 'Đang cập nhật...' : 'Đang tạo...'}
+                  {editingTag ? 'Đang cập nhật...' : 'Đang tạo...'}
                 </div>
               ) : (
-                editingImage ? 'Cập nhật' : 'Tạo hình ảnh'
+                editingTag ? 'Cập nhật' : 'Tạo danh mục'
               )}
             </button>
           </div>
