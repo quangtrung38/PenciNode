@@ -61,6 +61,16 @@ const navItems: NavItem[] = [
     name: 'Sản phẩm',
     path: '/admin/products',
   },
+  {
+    icon: <GridIcon />,
+    name: 'Quản lý tag',
+    path: '/admin/editor-tags',
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: 'Quản lý QR code',
+    path: '/admin/editor-qrcodes',
+  },
 ];
 
 // Remove othersItems array as we only need main menu items

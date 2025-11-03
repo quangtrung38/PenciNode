@@ -10,6 +10,7 @@ interface DragDropUploadProps {
   label?: string;
   placeholder?: string;
   error?: string;
+  isLoading?: boolean;
 }
 
 const DragDropUpload: React.FC<DragDropUploadProps> = ({
@@ -22,6 +23,7 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({
   label,
   placeholder = "Kéo thả hình ảnh vào đây hoặc click để chọn",
   error,
+  isLoading = false,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -101,47 +103,60 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({
       )}
 
       {!displayUrl ? (
-        <div
-          className={`
-            border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
-            ${isDragOver
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-25 dark:hover:bg-blue-900/10'
-            }
-            ${error ? 'border-red-300 dark:border-red-600' : ''}
-          `}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={handleClick}
-        >
-          <div className="space-y-4">
-            <div className="mx-auto w-12 h-12 text-gray-400">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
+        <div className="relative">
+          <div
+            className={`
+              border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
+              ${isDragOver
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-25 dark:hover:bg-blue-900/10'
+              }
+              ${error ? 'border-red-300 dark:border-red-600' : ''}
+              ${isLoading ? 'pointer-events-none opacity-50' : ''}
+            `}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+          >
+            <div className="space-y-4">
+              <div className="mx-auto w-16 h-16 text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-8 h-8">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {placeholder}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  JPG, PNG, GIF, WebP (tối đa {maxSize}MB)
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-gray-600 dark:text-gray-400">
-                {placeholder}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPG, PNG, GIF, WebP (tối đa {maxSize}MB)
-              </p>
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={accept}
+              onChange={handleFileSelect}
+              className="hidden"
+            />
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={accept}
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+
+          {/* Loading overlay */}
+          {isLoading && (
+            <div className="absolute inset-0 bg-white bg-opacity-75 dark:bg-gray-800 dark:bg-opacity-75 rounded-lg flex items-center justify-center">
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Đang tải lên...</span>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
           {/* Current Image Preview */}
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Ảnh hiện tại
             </label>
@@ -159,11 +174,22 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({
                 }}
                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                 title="Xóa hình ảnh"
+                disabled={isLoading}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+
+              {/* Loading overlay for preview */}
+              {isLoading && (
+                <div className="absolute inset-0 bg-white bg-opacity-75 dark:bg-gray-800 dark:bg-opacity-75 rounded-lg flex items-center justify-center">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Đang tải lên...</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -176,6 +202,7 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({
                 : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-25 dark:hover:bg-blue-900/10'
               }
               ${error ? 'border-red-300 dark:border-red-600' : ''}
+              ${isLoading ? 'pointer-events-none opacity-50' : ''}
             `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}

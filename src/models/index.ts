@@ -18,3 +18,7 @@ export { User } from './User';
 export type { IUser } from './User';
 export { default as UserPlan } from './UserPlan';
 export type { IUserPlan } from './UserPlan';
+export { EditorTag } from './EditorTag';
+export type { IEditorTag } from './EditorTag';
+export { EditorQRCode } from './EditorQRCode';
+export type { IEditorQRCode } from './EditorQRCode';

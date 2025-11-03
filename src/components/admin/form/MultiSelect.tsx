@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+import React from 'react';
+import Select, { StylesConfig, MultiValue, ActionMeta } from 'react-select';
 
 type Option = {
   value: string;
@@ -12,6 +13,7 @@ type MultiSelectProps = {
   defaultSelected?: string[];
   onChange?: (selected: string[]) => void;
   disabled?: boolean;
+  placeholder?: string;
 };
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -20,152 +22,145 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   defaultSelected = [],
   onChange,
   disabled = false,
+  placeholder = 'Tìm kiếm và chọn...',
 }) => {
-  const [selectedOptions, setSelectedOptions]
-    = useState<string[]>(defaultSelected);
-  const [isOpen, setIsOpen] = useState(false);
+  // Convert options to react-select format
+  const selectOptions = options.map(option => ({
+    value: option.value,
+    label: option.text,
+  }));
 
-  const toggleDropdown = () => {
-    if (disabled) {
-      return;
-    }
-    setIsOpen(prev => !prev);
-  };
-
-  const handleSelect = (optionValue: string) => {
-    const newSelectedOptions = selectedOptions.includes(optionValue)
-      ? selectedOptions.filter(value => value !== optionValue)
-      : [...selectedOptions, optionValue];
-
-    setSelectedOptions(newSelectedOptions);
-    if (onChange) {
-      onChange(newSelectedOptions);
-    }
-  };
-
-  const removeOption = (value: string) => {
-    const newSelectedOptions = selectedOptions.filter(opt => opt !== value);
-    setSelectedOptions(newSelectedOptions);
-    if (onChange) {
-      onChange(newSelectedOptions);
-    }
-  };
-
-  const selectedValuesText = selectedOptions.map(
-    value => options.find(option => option.value === value)?.text || '',
+  // Convert default selected to react-select format
+  const defaultValue = selectOptions.filter(option =>
+    defaultSelected.includes(option.value)
   );
 
+  const handleChange = (
+    selectedOptions: MultiValue<{ value: string; label: string }>,
+    _actionMeta: ActionMeta<{ value: string; label: string }>
+  ) => {
+    const selectedValues = selectedOptions.map(option => option.value);
+    if (onChange) {
+      onChange(selectedValues);
+    }
+  };
+
+  // Custom styles to match the design
+  const customStyles: StylesConfig<{ value: string; label: string }, true> = {
+    control: (provided, state) => ({
+      ...provided,
+      minHeight: '44px',
+      border: '1px solid #d1d5db',
+      borderRadius: '0.5rem',
+      boxShadow: state.isFocused ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
+      '&:hover': {
+        borderColor: '#9ca3af',
+      },
+      backgroundColor: 'transparent',
+      cursor: 'text',
+    }),
+    valueContainer: (provided) => ({
+      ...provided,
+      padding: '0.25rem 0.75rem',
+      gap: '0.5rem',
+    }),
+    multiValue: (provided) => ({
+      ...provided,
+      backgroundColor: '#f3f4f6',
+      borderRadius: '0.375rem',
+      padding: '0.125rem 0.5rem',
+      fontSize: '0.875rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.25rem',
+    }),
+    multiValueLabel: (provided) => ({
+      ...provided,
+      color: '#374151',
+      fontWeight: '500',
+    }),
+    multiValueRemove: (provided) => ({
+      ...provided,
+      color: '#6b7280',
+      cursor: 'pointer',
+      '&:hover': {
+        color: '#374151',
+        backgroundColor: 'transparent',
+      },
+    }),
+    input: (provided) => ({
+      ...provided,
+      color: '#374151',
+      fontSize: '0.875rem',
+      margin: 0,
+      padding: 0,
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#9ca3af',
+      fontSize: '0.875rem',
+    }),
+    menu: (provided) => ({
+      ...provided,
+      border: '1px solid #e5e7eb',
+      borderRadius: '0.5rem',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      zIndex: 50,
+    }),
+    menuList: (provided) => ({
+      ...provided,
+      padding: '0.25rem',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected
+        ? '#eff6ff'
+        : state.isFocused
+        ? '#f3f4f6'
+        : 'white',
+      color: state.isSelected ? '#2563eb' : '#374151',
+      cursor: 'pointer',
+      padding: '0.75rem 1rem',
+      fontSize: '0.875rem',
+      '&:active': {
+        backgroundColor: '#eff6ff',
+      },
+    }),
+    noOptionsMessage: (provided) => ({
+      ...provided,
+      color: '#9ca3af',
+      fontSize: '0.875rem',
+    }),
+    loadingMessage: (provided) => ({
+      ...provided,
+      color: '#9ca3af',
+      fontSize: '0.875rem',
+    }),
+  };
+
   return (
-    <div className="w-full">
-      <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+    <div className='w-full'>
+      <label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400'>
         {label}
       </label>
 
-      <div className="relative z-20 inline-block w-full">
-        <div className="relative flex flex-col items-center">
-          <div onClick={toggleDropdown} className="w-full">
-            <div className="shadow-theme-xs focus:border-brand-300 focus:shadow-focus-ring dark:focus:border-brand-300 mb-2 flex h-11 rounded-lg border border-gray-300 py-1.5 pr-3 pl-3 outline-hidden transition dark:border-gray-700 dark:bg-gray-900">
-              <div className="flex flex-auto flex-wrap gap-2">
-                {selectedValuesText.length > 0
-                  ? (
-                      selectedValuesText.map((text, index) => (
-                        <div
-                          key={index}
-                          className="group flex items-center justify-center rounded-full border-[0.7px] border-transparent bg-gray-100 py-1 pr-2 pl-2.5 text-sm text-gray-800 hover:border-gray-200 dark:bg-gray-800 dark:text-white/90 dark:hover:border-gray-800"
-                        >
-                          <span className="max-w-full flex-initial">{text}</span>
-                          <div className="flex flex-auto flex-row-reverse">
-                            <div
-                              onClick={() =>
-                                removeOption(selectedOptions[index] ?? '')}
-                              className="cursor-pointer pl-2 text-gray-500 group-hover:text-gray-400 dark:text-gray-400"
-                            >
-                              <svg
-                                className="fill-current"
-                                role="button"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 14 14"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  clipRule="evenodd"
-                                  d="M3.40717 4.46881C3.11428 4.17591 3.11428 3.70104 3.40717 3.40815C3.70006 3.11525 4.17494 3.11525 4.46783 3.40815L6.99943 5.93975L9.53095 3.40822C9.82385 3.11533 10.2987 3.11533 10.5916 3.40822C10.8845 3.70112 10.8845 4.17599 10.5916 4.46888L8.06009 7.00041L10.5916 9.53193C10.8845 9.82482 10.8845 10.2997 10.5916 10.5926C10.2987 10.8855 9.82385 10.8855 9.53095 10.5926L6.99943 8.06107L4.46783 10.5927C4.17494 10.8856 3.70006 10.8856 3.40717 10.5927C3.11428 10.2998 3.11428 9.8249 3.40717 9.53201L5.93877 7.00041L3.40717 4.46881Z"
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )
-                  : (
-                      <input
-                        placeholder="Select option"
-                        className="h-full w-full appearance-none border-0 bg-transparent p-1 pr-2 text-sm outline-hidden placeholder:text-gray-800 focus:border-0 focus:ring-0 focus:outline-hidden dark:placeholder:text-white/90"
-                        readOnly
-                        value="Select option"
-                      />
-                    )}
-              </div>
-              <div className="flex w-7 items-center py-1 pr-1 pl-1">
-                <button
-                  type="button"
-                  onClick={toggleDropdown}
-                  className="h-5 w-5 cursor-pointer text-gray-700 outline-hidden focus:outline-hidden dark:text-gray-400"
-                >
-                  <svg
-                    className={`stroke-current ${isOpen ? 'rotate-180' : ''}`}
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M4.79175 7.39551L10.0001 12.6038L15.2084 7.39551"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {isOpen && (
-            <div
-              className="max-h-select absolute top-full left-0 z-40 w-full overflow-y-auto rounded-lg bg-white shadow-sm dark:bg-gray-900"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex flex-col">
-                {options.map((option, index) => (
-                  <div key={index}>
-                    <div
-                      className="hover:bg-primary/5 w-full cursor-pointer rounded-t border-b border-gray-200 dark:border-gray-800"
-                      onClick={() => handleSelect(option.value)}
-                    >
-                      <div
-                        className={`relative flex w-full items-center p-2 pl-2 ${
-                          selectedOptions.includes(option.value)
-                            ? 'bg-primary/10'
-                            : ''
-                        }`}
-                      >
-                        <div className="mx-2 leading-6 text-gray-800 dark:text-white/90">
-                          {option.text}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <Select
+        isMulti
+        options={selectOptions}
+        value={defaultValue}
+        onChange={handleChange}
+        placeholder={placeholder}
+        isDisabled={disabled}
+        styles={customStyles}
+        className='react-select-container'
+        classNamePrefix='react-select'
+        menuPortalTarget={document.body}
+        closeMenuOnSelect={false}
+        blurInputOnSelect={false}
+        components={{
+          IndicatorSeparator: () => null,
+        }}
+      />
     </div>
   );
 };

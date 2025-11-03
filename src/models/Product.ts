@@ -13,6 +13,8 @@ export interface IProduct extends Document {
   size_dv: string | null;
   select_size: number;
   img: string | null;
+  imgPenci: string | null;
+  imgBannerPenci: string | null;
   tags_template: string | null;
   tags_graphics: string | null;
   tags_textstyles: string | null;
@@ -43,6 +45,7 @@ export interface IProduct extends Document {
   numCol: number;
   sizeExport: number;
   sizeExportClient: number;
+  textBanner: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -92,6 +95,14 @@ const ProductSchema = new Schema<IProduct>(
       default: 0,
     },
     img: {
+      type: String,
+      default: null,
+    },
+    imgPenci: {
+      type: String,
+      default: null,
+    },
+    imgBannerPenci: {
       type: String,
       default: null,
     },
@@ -214,6 +225,10 @@ const ProductSchema = new Schema<IProduct>(
     sizeExportClient: {
       type: Number,
       default: 0,
+    },
+    textBanner: {
+      type: String,
+      default: null,
     },
   },
   {
