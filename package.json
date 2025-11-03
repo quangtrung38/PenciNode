@@ -86,6 +86,8 @@
     "react-dom": "19.1.1",
     "react-dropzone": "^14.3.5",
     "react-hook-form": "^7.63.0",
+    "react-hot-toast": "^2.6.0",
+    "react-select": "^5.10.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "superjson": "^2.2.2",
