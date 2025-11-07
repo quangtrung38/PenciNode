@@ -11,10 +11,16 @@ interface EditorQRCode {
   elements: string | null;
   tags: string | null;
   display: number;
-  cate_dn: number;
+  cate_dn: string;
   user_id: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  display: number;
 }
 
 interface EditorQRCodeModalProps {
@@ -31,15 +37,11 @@ export default function EditorQRCodeModal({
   editingQR,
 }: EditorQRCodeModalProps) {
   const [formData, setFormData] = useState({
-    md5_id: '',
     name: '',
-    img: '',
-    elements: '',
-    tags: '',
     display: 1,
-    cate_dn: 0,
-    user_id: 0,
+    cate_dn: '0',
   });
+  const [categories, setCategories] = useState<Category[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -48,31 +50,40 @@ export default function EditorQRCodeModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/admin/editor-category-qrcode');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.categories || []);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
+
   // Reset form when modal opens/closes or editing item changes
   useEffect(() => {
     if (isOpen) {
       if (editingQR) {
         setFormData({
-          md5_id: editingQR.md5_id,
           name: editingQR.name,
-          img: editingQR.img || '',
-          elements: editingQR.elements || '',
-          tags: editingQR.tags || '',
           display: editingQR.display,
           cate_dn: editingQR.cate_dn,
-          user_id: editingQR.user_id,
         });
         setImagePreview(editingQR.img);
       } else {
         setFormData({
-          md5_id: '',
           name: '',
-          img: '',
-          elements: '',
-          tags: '',
           display: 1,
-          cate_dn: 0,
-          user_id: 0,
+          cate_dn: '0',
         });
         setImagePreview(null);
       }
@@ -81,12 +92,16 @@ export default function EditorQRCodeModal({
     }
   }, [isOpen, editingQR]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'number' ? Number(value) : value,
     }));
+  };
+
+  const handleToggleDisplay = () => {
+    setFormData(prev => ({ ...prev, display: prev.display === 1 ? 0 : 1 }));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -145,7 +160,6 @@ export default function EditorQRCodeModal({
   const handleRemoveImage = () => {
     setImagePreview(null);
     setSelectedFile(null);
-    setFormData(prev => ({ ...prev, img: '' }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -219,12 +233,13 @@ export default function EditorQRCodeModal({
 
     try {
       // Validate required fields
-      if (!formData.md5_id.trim()) {
-        throw new Error('MD5 ID là bắt buộc');
-      }
-
       if (!formData.name.trim()) {
         throw new Error('Tên QR code là bắt buộc');
+      }
+
+      // Validate image for new QR code
+      if (!editingQR && !selectedFile) {
+        throw new Error('Hình ảnh là bắt buộc');
       }
 
       let finalImageUrl = imagePreview;
@@ -245,7 +260,9 @@ export default function EditorQRCodeModal({
 
       // Prepare data for submission
       const submitData = {
-        ...formData,
+        name: formData.name.trim(),
+        display: formData.display,
+        cate_dn: formData.cate_dn,
         img: finalImageUrl,
       };
 
@@ -335,21 +352,6 @@ export default function EditorQRCodeModal({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* MD5 ID */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  MD5 ID <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="md5_id"
-                  value={formData.md5_id}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Nhập MD5 ID"
-                />
-              </div>
-
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -362,7 +364,53 @@ export default function EditorQRCodeModal({
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   placeholder="Nhập tên QR code"
+                  required
                 />
+              </div>
+
+              {/* Display Toggle */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Hiển thị
+                </label>
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={handleToggleDisplay}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      formData.display === 1 ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        formData.display === 1 ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
+                    {formData.display === 1 ? 'Đang hiển thị' : 'Đang ẩn'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Danh mục
+                </label>
+                <select
+                  name="cate_dn"
+                  value={formData.cate_dn}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                  <option value={0}>Không có danh mục</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Current Image Preview */}
@@ -394,7 +442,7 @@ export default function EditorQRCodeModal({
               {/* Image Upload Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {imagePreview ? 'Thay đổi ảnh' : 'Hình ảnh'}
+                  Hình ảnh {!editingQR && <span className="text-red-500">*</span>}
                 </label>
 
                 {!imagePreview ? (
@@ -472,52 +520,6 @@ export default function EditorQRCodeModal({
                     />
                   </div>
                 )}
-              </div>
-
-              {/* Elements (JSON) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Elements (JSON)
-                </label>
-                <textarea
-                  name="elements"
-                  value={formData.elements}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono"
-                  placeholder='{"key": "value"}'
-                />
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tags
-                </label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="tag1,tag2,tag3"
-                />
-              </div>
-
-              {/* Display */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Hiển thị
-                </label>
-                <select
-                  name="display"
-                  value={formData.display}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  <option value={1}>Hiển thị</option>
-                  <option value={0}>Ẩn</option>
-                </select>
               </div>
             </form>
           </div>

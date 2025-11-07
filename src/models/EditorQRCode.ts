@@ -7,7 +7,7 @@ export interface IEditorQRCode extends Document {
   elements?: string; // JSON string
   tags?: string;
   display: number;
-  cate_dn: number;
+  cate_dn: string; // Category ID (MongoDB ObjectId)
   user_id: number;
   createdAt: Date;
   updatedAt: Date;
@@ -17,8 +17,9 @@ const EditorQRCodeSchema = new Schema<IEditorQRCode>(
   {
     md5_id: {
       type: String,
-      required: [true, 'MD5 ID is required'],
+      required: false,
       trim: true,
+      default: '',
     },
     name: {
       type: String,
@@ -44,8 +45,8 @@ const EditorQRCodeSchema = new Schema<IEditorQRCode>(
       enum: [0, 1],
     },
     cate_dn: {
-      type: Number,
-      default: 0,
+      type: String,
+      default: '0',
     },
     user_id: {
       type: Number,

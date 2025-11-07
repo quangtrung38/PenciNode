@@ -19,16 +19,16 @@ interface Props {
 }
 
 export default function EditorCategoryQRCodeModal({ isOpen, onClose, onSuccess, editing }: Props) {
-  const [form, setForm] = useState<Category>({ name: '', display: 0 });
+  const [form, setForm] = useState<Category>({ name: '', display: 1 });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       if (editing) {
-        setForm({ name: editing.name || '', display: editing.display ?? 0 });
+        setForm({ name: editing.name || '', display: editing.display ?? 1 });
       } else {
-        setForm({ name: '', display: 0 });
+        setForm({ name: '', display: 1 });
       }
       setError(null);
     }
@@ -37,6 +37,10 @@ export default function EditorCategoryQRCodeModal({ isOpen, onClose, onSuccess, 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: name === 'display' ? Number(value) : value }));
+  };
+
+  const handleToggleDisplay = () => {
+    setForm(prev => ({ ...prev, display: prev.display === 1 ? 0 : 1 }));
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -56,7 +60,7 @@ export default function EditorCategoryQRCodeModal({ isOpen, onClose, onSuccess, 
       const resp = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name.trim(), display: form.display ?? 0 }),
+        body: JSON.stringify({ name: form.name.trim(), display: form.display ?? 1 }),
       });
 
       const data = await resp.json();
@@ -111,11 +115,23 @@ export default function EditorCategoryQRCodeModal({ isOpen, onClose, onSuccess, 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Hiển thị</label>
-                <select name="display" value={form.display} onChange={handleChange} className="mt-1 w-full px-3 py-2 border rounded-md">
-                  <option value={1}>Hiển thị</option>
-                  <option value={0}>Ẩn</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Hiển thị</label>
+                <button
+                  type="button"
+                  onClick={handleToggleDisplay}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    form.display === 1 ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      form.display === 1 ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="ml-3 text-sm text-gray-600">
+                  {form.display === 1 ? 'Đang hiển thị' : 'Đang ẩn'}
+                </span>
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">

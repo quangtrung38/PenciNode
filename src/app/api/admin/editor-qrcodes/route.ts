@@ -56,7 +56,7 @@ async function handleGetEditorQRCodes(
 
     // Filter by cate_dn
     if (cate_dn && cate_dn !== 'all') {
-      query.cate_dn = Number.parseInt(cate_dn);
+      query.cate_dn = cate_dn;
     }
 
     // Get total count
@@ -115,13 +115,6 @@ async function handleCreateEditorQRCode(
     const { md5_id, name, img, elements, tags, display, cate_dn, user_id } = body;
 
     // Validate required fields
-    if (!md5_id?.trim()) {
-      return NextResponse.json(
-        { error: 'MD5 ID là bắt buộc' },
-        { status: 400 },
-      );
-    }
-
     if (!name?.trim()) {
       return NextResponse.json(
         { error: 'Tên QR code là bắt buộc' },
@@ -129,24 +122,33 @@ async function handleCreateEditorQRCode(
       );
     }
 
-    // Check if md5_id already exists
-    const existingQR = await EditorQRCode.findOne({ md5_id: md5_id.trim() });
-    if (existingQR) {
-      return NextResponse.json(
-        { error: 'MD5 ID đã tồn tại' },
-        { status: 400 },
-      );
+    // Generate MD5 ID if not provided
+    let finalMd5Id = md5_id?.trim();
+    if (!finalMd5Id) {
+      // Generate a unique MD5 ID based on timestamp and random string
+      const crypto = await import('crypto');
+      const uniqueString = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      finalMd5Id = crypto.createHash('md5').update(uniqueString).digest('hex');
+    } else {
+      // Check if md5_id already exists
+      const existingQR = await EditorQRCode.findOne({ md5_id: finalMd5Id });
+      if (existingQR) {
+        return NextResponse.json(
+          { error: 'MD5 ID đã tồn tại' },
+          { status: 400 },
+        );
+      }
     }
 
     // Create editor QR code
     const editorQRCode = await EditorQRCode.create({
-      md5_id: md5_id.trim(),
+      md5_id: finalMd5Id,
       name: name.trim(),
       img: img || null,
       elements: elements || null,
       tags: tags || null,
-      display: display || 0,
-      cate_dn: cate_dn || 0,
+      display: display ?? 1,
+      cate_dn: cate_dn || '0',
       user_id: user_id || 0,
     });
 

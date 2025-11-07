@@ -82,21 +82,6 @@ async function handleUpdateEditorQRCode(
     const body = await request.json();
     const { md5_id, name, img, elements, tags, display, cate_dn, user_id } = body;
 
-    // Validate required fields
-    if (!md5_id?.trim()) {
-      return NextResponse.json(
-        { error: 'MD5 ID là bắt buộc' },
-        { status: 400 },
-      );
-    }
-
-    if (!name?.trim()) {
-      return NextResponse.json(
-        { error: 'Tên QR code là bắt buộc' },
-        { status: 400 },
-      );
-    }
-
     // Find existing QR code
     const existingQR = await EditorQRCode.findById(id);
     if (!existingQR) {
@@ -106,8 +91,19 @@ async function handleUpdateEditorQRCode(
       );
     }
 
+    // Validate name only if it's being updated
+    if (name !== undefined && !name?.trim()) {
+      return NextResponse.json(
+        { error: 'Tên QR code là bắt buộc' },
+        { status: 400 },
+      );
+    }
+
+    // Use existing md5_id if not provided
+    const finalMd5Id = md5_id?.trim() || existingQR.md5_id;
+
     // Check if md5_id already exists (excluding current QR code)
-    if (md5_id.trim() !== existingQR.md5_id) {
+    if (md5_id && md5_id.trim() !== existingQR.md5_id) {
       const md5Exists = await EditorQRCode.findOne({ md5_id: md5_id.trim(), _id: { $ne: id } });
       if (md5Exists) {
         return NextResponse.json(
@@ -121,8 +117,8 @@ async function handleUpdateEditorQRCode(
     const updatedQR = await EditorQRCode.findByIdAndUpdate(
       id,
       {
-        md5_id: md5_id.trim(),
-        name: name.trim(),
+        md5_id: finalMd5Id,
+        name: name !== undefined ? name.trim() : existingQR.name,
         img: img !== undefined ? img : existingQR.img,
         elements: elements !== undefined ? elements : existingQR.elements,
         tags: tags !== undefined ? tags : existingQR.tags,
