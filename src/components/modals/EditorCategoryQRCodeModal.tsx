@@ -84,7 +84,7 @@ export default function EditorCategoryQRCodeModal({ isOpen, onClose, onSuccess, 
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} className="relative z-50">
+    <Dialog open={isOpen} onClose={handleClose} className="relative z-99999">
       <div className="fixed inset-0 bg-black opacity-60" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-y-auto">

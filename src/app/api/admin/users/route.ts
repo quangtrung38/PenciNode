@@ -84,7 +84,7 @@ async function handleGetUsers(request: NextRequest) {
     // Parallel queries for better performance
     const [rawUsers, totalCount] = await Promise.all([
       (User as any).find(query)
-        .select('name email image role status createdAt updatedAt lastLoginAt emailVerified')
+        .select('name email image role status first_name last_name createdAt updatedAt lastLoginAt emailVerified')
         .sort({ createdAt: -1 })
         .skip(offset)
         .limit(limit)
@@ -98,10 +98,21 @@ async function handleGetUsers(request: NextRequest) {
       const roleString = user.role.toString();
       const statusString = user.status.toString();
       
+      // Get display name
+      let displayName = user.name;
+      if (user.first_name && user.last_name) {
+        displayName = `${user.first_name} ${user.last_name}`;
+      } else if (!displayName) {
+        displayName = user.email;
+      }
+      
       return {
         id: user._id.toString(),
-        name: user.name,
+        _id: user._id.toString(),
+        name: displayName,
         email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
         image: user.image,
         role: roleString,
         status: statusString,

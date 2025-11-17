@@ -71,6 +71,11 @@ const navItems: NavItem[] = [
     name: 'Quản lý QR code',
     path: '/admin/editor-qrcodes',
   },
+  {
+    icon: <GridIcon />,
+    name: 'Quản lý Template',
+    path: '/admin/editor-templates',
+  },
 ];
 
 // Remove othersItems array as we only need main menu items

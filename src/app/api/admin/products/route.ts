@@ -71,6 +71,7 @@ async function handleGetProducts(
 
     const formattedProducts = products.map((product: any) => ({
       id: product._id.toString(),
+      tgia_product: product.tgia_product,
       name: product.name,
       img: product.img,
       svgContent: product.svgContent,
