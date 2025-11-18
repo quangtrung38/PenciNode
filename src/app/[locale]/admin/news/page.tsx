@@ -200,8 +200,10 @@ export default function NewsPage() {
       });
 
       if (response.ok) {
+        // Remove item from state instead of fetching entire list
+        setNews(prevNews => prevNews.filter(item => item.id !== id));
+        setTotalCount(prev => prev - 1);
         alert('Xóa tin tức thành công');
-        await fetchNews(false);
       } else {
         alert('Có lỗi xảy ra khi xóa tin tức');
       }
@@ -213,41 +215,28 @@ export default function NewsPage() {
 
   const handleToggleDisplay = async (id: string, currentDisplay: number) => {
     try {
+      const newDisplay = currentDisplay === 1 ? 0 : 1;
+      
       const response = await fetch(`/api/admin/news/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          display: currentDisplay === 1 ? 0 : 1,
+          display: newDisplay,
         }),
       });
 
       if (response.ok) {
-        await fetchNews(false);
+        // Update only the specific item in state
+        setNews(prevNews => 
+          prevNews.map(item => 
+            item.id === id ? { ...item, display: newDisplay } : item
+          )
+        );
       }
     } catch (error) {
       console.error('Error toggling display:', error);
-    }
-  };
-
-  const handleToggleEnable = async (id: string, currentEnable: number) => {
-    try {
-      const response = await fetch(`/api/admin/news/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          enable: currentEnable === 1 ? 0 : 1,
-        }),
-      });
-
-      if (response.ok) {
-        await fetchNews(false);
-      }
-    } catch (error) {
-      console.error('Error toggling enable:', error);
     }
   };
 
@@ -591,45 +580,24 @@ export default function NewsPage() {
                       {item.view_count.toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="space-y-2">
-                        {/* Display Toggle */}
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleDisplay(item.id, item.display)}
-                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                              item.display === 1 ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'
+                      {/* Display Toggle */}
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleDisplay(item.id, item.display)}
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                            item.display === 1 ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              item.display === 1 ? 'translate-x-6' : 'translate-x-1'
                             }`}
-                          >
-                            <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                item.display === 1 ? 'translate-x-6' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {item.display === 1 ? 'Hiển thị' : 'Ẩn'}
-                          </span>
-                        </div>
-                        {/* Enable Toggle */}
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleEnable(item.id, item.enable)}
-                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                              item.enable === 1 ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                            }`}
-                          >
-                            <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                item.enable === 1 ? 'translate-x-6' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {item.enable === 1 ? 'Kích hoạt' : 'Vô hiệu hóa'}
-                          </span>
-                        </div>
+                          />
+                        </button>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {item.display === 1 ? 'Hiển thị' : 'Ẩn'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center text-sm font-medium">
