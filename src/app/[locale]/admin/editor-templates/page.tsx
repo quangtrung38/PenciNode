@@ -833,10 +833,10 @@ export default function EditorTemplatesPage() {
 
                     {/* Dropdown Menu using Portal */}
                     <TemplateDropdownMenu
-                      template={template}
+                      template={template as any}
                       isOpen={openDropdown === template.id}
-                      buttonRef={{ current: dropdownRefs.current[template.id] || null }}
-                      onEdit={handleEditTemplate}
+                      buttonRef={{ current: dropdownRefs.current[template.id] as HTMLButtonElement }}
+                      onEdit={handleEditTemplate as any}
                       onDelete={handleDelete}
                       onDisplayToggle={handleToggleDisplay}
                       onFavoriteToggle={handleToggleFavorite}

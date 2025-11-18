@@ -37,7 +37,7 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
 
     return NextResponse.json({
       category: {
-        id: category._id.toString(),
+        id: (category._id as any).toString(),
         name: category.name,
         display: category.display,
         position: category.position,
@@ -56,7 +56,7 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
 }
 
 // DELETE: Delete QR code category
-async function handleDelete(req: NextRequest, { params }: { params: { id: string } }) {
+async function handleDelete(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectDB();
 

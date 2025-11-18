@@ -76,6 +76,11 @@ const navItems: NavItem[] = [
     name: 'Quản lý Template',
     path: '/admin/editor-templates',
   },
+  {
+    icon: <BoxCubeIcon />,
+    name: 'Tin tức',
+    path: '/admin/news',
+  },
 ];
 
 // Remove othersItems array as we only need main menu items

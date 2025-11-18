@@ -210,7 +210,7 @@ async function handleCreateEditorTemplate(
     await newTemplate.save();
 
     return NextResponse.json({
-      id: newTemplate._id.toString(),
+      id: (newTemplate._id as any).toString(),
       folder_id: newTemplate.folder_id,
       md5_id: newTemplate.md5_id,
       name: newTemplate.name,

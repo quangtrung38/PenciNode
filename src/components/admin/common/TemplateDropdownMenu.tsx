@@ -6,9 +6,20 @@ import { createPortal } from 'react-dom';
 interface EditorTemplate {
   id: string;
   name: string;
+  slug: string;
+  img: string | null;
   display: number;
   is_favorite: 'Y' | 'N';
-  cate_dn: number;
+  cate_dn: string | null;
+  collection_id: string | null;
+  views: number;
+  img_download_count: number;
+  pdf_download_count: number;
+  use_count: number;
+  homePenci: number;
+  is_confirm: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Props {

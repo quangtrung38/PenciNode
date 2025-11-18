@@ -114,7 +114,7 @@ async function handleUpdateEditorTemplate(
     }
 
     return NextResponse.json({
-      id: updatedTemplate._id.toString(),
+      id: (updatedTemplate._id as any).toString(),
       folder_id: updatedTemplate.folder_id,
       md5_id: updatedTemplate.md5_id,
       name: updatedTemplate.name,
@@ -149,7 +149,7 @@ async function handleUpdateEditorTemplate(
 
 // DELETE - Soft delete editor template
 async function handleDeleteEditorTemplate(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
@@ -182,7 +182,7 @@ async function handleDeleteEditorTemplate(
 
     return NextResponse.json({
       message: 'Xóa template thành công',
-      id: deletedTemplate._id.toString(),
+      id: (deletedTemplate._id as any).toString(),
     });
   } catch (error) {
     console.error('Error deleting editor template:', error);

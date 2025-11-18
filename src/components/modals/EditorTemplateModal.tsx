@@ -134,13 +134,14 @@ export default function EditorTemplateModal({ isOpen, onClose, onSuccess, editin
     setFormData(prev => ({ ...prev, display: prev.display === 1 ? 0 : 1 }));
   };
 
-  const handleToggleFavorite = () => {
-    setFormData(prev => ({ ...prev, is_favorite: prev.is_favorite === 'Y' ? 'N' : 'Y' }));
-  };
+  // Unused handlers - kept for potential future use
+  // const handleToggleFavorite = () => {
+  //   setFormData(prev => ({ ...prev, is_favorite: prev.is_favorite === 'Y' ? 'N' : 'Y' }));
+  // };
 
-  const handleToggleHomePenci = () => {
-    setFormData(prev => ({ ...prev, homePenci: prev.homePenci === 1 ? 0 : 1 }));
-  };
+  // const handleToggleHomePenci = () => {
+  //   setFormData(prev => ({ ...prev, homePenci: prev.homePenci === 1 ? 0 : 1 }));
+  // };
 
   const validateFile = (file: File): string | null => {
     const maxSize = 10 * 1024 * 1024; // 10MB
