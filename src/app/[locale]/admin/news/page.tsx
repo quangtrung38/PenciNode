@@ -342,14 +342,27 @@ export default function NewsPage() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => router.push('/admin/news/create')}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Thêm Tin tức
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push('/admin/news/create')}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Thêm Tin tức
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingCategory(null);
+                setIsCategoryModalOpen(true);
+              }}
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Thêm Danh mục
+            </button>
+          </div>
         </div>
       </div>
 
